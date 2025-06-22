@@ -11,8 +11,6 @@ You can **pan, pinch, scroll, and zoom infinitely** — all computations are han
 <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExampuYnlyeXQ2dHB1emYzNW5wejVhb2U2anBicjJjdWZrYmdwemZzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pJJTmNjdmJX1P6qCQf/giphy.gif" width="500"/>
 </details>
 
----
-
 ## Running Locally
 
 ### Prerequisites
@@ -42,8 +40,6 @@ You can **pan, pinch, scroll, and zoom infinitely** — all computations are han
    ```
 
 4. Open in your browser: [http://localhost:5173](http://localhost:5173)
-
----
 
 ## Technologies Used
 
