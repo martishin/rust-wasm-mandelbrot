@@ -1,61 +1,49 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-} from 'react';
-import init, { GPURenderer } from './pkg/mandelbrot_wasm.js';
-import './App.css';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import init, { GPURenderer } from "./pkg/mandelbrot_wasm.js";
+import "./App.css";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gpuRef = useRef<GPURenderer | null>(null);
 
-  // fractal view state
   const [center, setCenter] = useState({ re: -0.5, im: 0.0 });
-  const INITIAL_SCALE = 4.0 / window.innerHeight
-  const [scale,  setScale]  = useState(INITIAL_SCALE);
+  const INITIAL_SCALE = 4.0 / window.innerHeight;
+  const [scale, setScale] = useState(INITIAL_SCALE);
 
-  // FPS smoothing
-  const [fps, setFps]       = useState(0);
-  const fpsLastTime  = useRef(performance.now());
-  const fpsFrameCnt  = useRef(0);
+  const [fps, setFps] = useState(0);
+  const fpsLastTime = useRef(performance.now());
+  const fpsFrameCnt = useRef(0);
 
-  // click-drag pan
   const dragging = useRef(false);
-  const lastPos  = useRef({ x: 0, y: 0 });
+  const lastPos = useRef({ x: 0, y: 0 });
 
-  // pinch-zoom state
-  const pinchData = useRef< null | {
+  const pinchData = useRef<null | {
     initialDist: number;
     initialCenter: { re: number; im: number };
     initialScale: number;
     midpoint: { x: number; y: number };
   }>(null);
 
-  // 1️⃣ Initialize Wasm + GPU once
   useEffect(() => {
     init().then(() => {
-      const gpu = new GPURenderer('mandelbrot', 500);
+      const gpu = new GPURenderer("mandelbrot", 500);
       gpuRef.current = gpu;
       gpu.render(center.re, center.im, scale);
 
-      // handle window resize
       const onResize = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
         const c = canvasRef.current!;
-        c.width  = w;
+        c.width = w;
         c.height = h;
         gpu.resize(w, h);
         gpu.render(center.re, center.im, scale);
       };
-      window.addEventListener('resize', onResize);
-      return () => window.removeEventListener('resize', onResize);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
     });
   }, []);
 
-  // 2️⃣ Continuous render + 250 ms-smoothed FPS
   useEffect(() => {
     let id: number;
     const loop = () => {
@@ -75,62 +63,60 @@ export default function App() {
     return () => cancelAnimationFrame(id);
   }, [center, scale]);
 
-  // 3️⃣ Wheel handler (non-passive below) logic
-  const onWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    if (!gpuRef.current) return;
+  const onWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      if (!gpuRef.current) return;
 
-    const dx = e.deltaX, dy = e.deltaY;
-    const rect = canvasRef.current!.getBoundingClientRect();
+      const dx = e.deltaX,
+        dy = e.deltaY;
+      const rect = canvasRef.current!.getBoundingClientRect();
 
-    if (e.ctrlKey) {
-      // zoom at cursor
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const zoom = dy < 0 ? 0.90 : 1.10;
-      const newScale = Math.min(scale * zoom, INITIAL_SCALE);
+      if (e.ctrlKey) {
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const zoom = dy < 0 ? 0.9 : 1.1;
+        const newScale = Math.min(scale * zoom, INITIAL_SCALE);
 
-      const cre = center.re + (x - rect.width/2) * scale;
-      const cim = center.im - (y - rect.height/2) * scale;
+        const cre = center.re + (x - rect.width / 2) * scale;
+        const cim = center.im - (y - rect.height / 2) * scale;
 
-      setScale(newScale);
-      setCenter({
-        re: cre - (x - rect.width/2) * newScale,
-        im: cim + (y - rect.height/2) * newScale,
-      });
-    } else {
-      // natural two-finger pan
-      setCenter(c => ({
-        re: c.re + dx * scale,
-        im: c.im - dy * scale,
-      }));
-    }
-  }, [center, scale]);
+        setScale(newScale);
+        setCenter({
+          re: cre - (x - rect.width / 2) * newScale,
+          im: cim + (y - rect.height / 2) * newScale,
+        });
+      } else {
+        setCenter((c) => ({
+          re: c.re + dx * scale,
+          im: c.im - dy * scale,
+        }));
+      }
+    },
+    [center, scale],
+  );
 
-  // Attach non-passive wheel listener once
   useEffect(() => {
     const canvas = canvasRef.current!;
-    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => {
-      canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener("wheel", onWheel);
     };
   }, [onWheel]);
 
-  // 4️⃣ Prevent Safari page-zoom gestures
   useEffect(() => {
     const cvs = canvasRef.current!;
     const block = (e: Event) => e.preventDefault();
-    cvs.addEventListener('gesturestart',  block);
-    cvs.addEventListener('gesturechange', block);
-    cvs.addEventListener('gestureend',    block);
+    cvs.addEventListener("gesturestart", block);
+    cvs.addEventListener("gesturechange", block);
+    cvs.addEventListener("gestureend", block);
     return () => {
-      cvs.removeEventListener('gesturestart',  block);
-      cvs.removeEventListener('gesturechange', block);
-      cvs.removeEventListener('gestureend',    block);
+      cvs.removeEventListener("gesturestart", block);
+      cvs.removeEventListener("gesturechange", block);
+      cvs.removeEventListener("gestureend", block);
     };
   }, []);
 
-  // 5️⃣ Touch-pinch override
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       e.preventDefault();
@@ -146,8 +132,13 @@ export default function App() {
           y: (t0.clientY + t1.clientY) / 2,
         },
       };
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      dragging.current = true;
+      lastPos.current = { x: t.clientX, y: t.clientY };
     }
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     const pd = pinchData.current;
     if (pd && e.touches.length === 2) {
@@ -162,49 +153,61 @@ export default function App() {
       const x = pd.midpoint.x - rect.left;
       const y = pd.midpoint.y - rect.top;
 
-      const cre = pd.initialCenter.re + (x - rect.width/2) * pd.initialScale;
-      const cim = pd.initialCenter.im - (y - rect.height/2) * pd.initialScale;
+      const cre = pd.initialCenter.re + (x - rect.width / 2) * pd.initialScale;
+      const cim = pd.initialCenter.im - (y - rect.height / 2) * pd.initialScale;
 
       setScale(newScale);
       setCenter({
-        re: cre - (x - rect.width/2) * newScale,
-        im: cim + (y - rect.height/2) * newScale,
+        re: cre - (x - rect.width / 2) * newScale,
+        im: cim + (y - rect.height / 2) * newScale,
       });
+    } else if (!pd && e.touches.length === 1 && dragging.current) {
+      const t = e.touches[0];
+      const dx = t.clientX - lastPos.current.x;
+      const dy = t.clientY - lastPos.current.y;
+      lastPos.current = { x: t.clientX, y: t.clientY };
+      setCenter((c) => ({
+        re: c.re - dx * scale,
+        im: c.im + dy * scale,
+      }));
     }
   };
+
   const onTouchEnd = (e: React.TouchEvent) => {
     if (pinchData.current && e.touches.length < 2) pinchData.current = null;
+    if (e.touches.length === 0) dragging.current = false;
   };
 
-  // 6️⃣ Click-drag pan fallback
   const onMouseDown = (e: React.MouseEvent) => {
     dragging.current = true;
     lastPos.current = { x: e.clientX, y: e.clientY };
   };
-  const onMouseUp   = () => { dragging.current = false; };
+  const onMouseUp = () => {
+    dragging.current = false;
+  };
   const onMouseMove = (e: React.MouseEvent) => {
     if (!dragging.current) return;
     const dx = e.clientX - lastPos.current.x;
     const dy = e.clientY - lastPos.current.y;
     lastPos.current = { x: e.clientX, y: e.clientY };
-    setCenter(c => ({
+    setCenter((c) => ({
       re: c.re - dx * scale,
       im: c.im + dy * scale,
     }));
   };
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: "relative" }}>
       <canvas
         id="mandelbrot"
         ref={canvasRef}
         width={window.innerWidth}
         height={window.innerHeight}
         style={{
-          display:     'block',
-          width:       '100vw',
-          height:      '100vh',
-          touchAction: 'none',
+          display: "block",
+          width: "100vw",
+          height: "100vh",
+          touchAction: "none",
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -213,17 +216,16 @@ export default function App() {
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       />
-
       <div
         style={{
-          position:   'absolute',
-          top:         8,
-          left:        8,
-          background: 'rgba(0,0,0,0.5)',
-          color:       '#0f0',
-          padding:     '4px',
-          fontFamily: 'monospace',
-          zIndex:      1,
+          position: "absolute",
+          top: 8,
+          left: 8,
+          background: "rgba(0,0,0,0.5)",
+          color: "#0f0",
+          padding: "4px",
+          fontFamily: "monospace",
+          zIndex: 1,
         }}
       >
         FPS: {fps.toFixed(1)}
