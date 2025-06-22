@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, {
   useEffect,
   useRef,
@@ -10,7 +9,7 @@ import './App.css';
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gpuRef    = useRef<GPURenderer>();
+  const gpuRef = useRef<GPURenderer | null>(null);
 
   // fractal view state
   const [center, setCenter] = useState({ re: -0.5, im: 0.0 });
@@ -120,7 +119,7 @@ export default function App() {
   // 4️⃣ Prevent Safari page-zoom gestures
   useEffect(() => {
     const cvs = canvasRef.current!;
-    const block = (e: any) => e.preventDefault();
+    const block = (e: Event) => e.preventDefault();
     cvs.addEventListener('gesturestart',  block);
     cvs.addEventListener('gesturechange', block);
     cvs.addEventListener('gestureend',    block);
@@ -135,7 +134,7 @@ export default function App() {
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       e.preventDefault();
-      const [t0, t1] = e.touches;
+      const [t0, t1] = Array.from(e.touches);
       const dx = t1.clientX - t0.clientX;
       const dy = t1.clientY - t0.clientY;
       pinchData.current = {
@@ -153,7 +152,7 @@ export default function App() {
     const pd = pinchData.current;
     if (pd && e.touches.length === 2) {
       e.preventDefault();
-      const [t0, t1] = e.touches;
+      const [t0, t1] = Array.from(e.touches);
       const dx = t1.clientX - t0.clientX;
       const dy = t1.clientY - t0.clientY;
       const dist = Math.hypot(dx, dy);
