@@ -13,6 +13,7 @@ export default function App() {
   const [fps, setFps] = useState(0);
   const fpsLastTime = useRef(performance.now());
   const fpsFrameCnt = useRef(0);
+  const [showFps, setShowFps] = useState(true);
 
   const dragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
@@ -228,20 +229,24 @@ export default function App() {
         onMouseUp={onMouseUp}
         onMouseMove={onMouseMove}
       />
-      <div
-        style={{
-          position: "absolute",
-          top: 8,
-          left: 8,
-          background: "rgba(0,0,0,0.5)",
-          color: "#0f0",
-          padding: "4px",
-          fontFamily: "monospace",
-          zIndex: 1,
-        }}
-      >
-        FPS: {fps.toFixed(1)}
-      </div>
+      {showFps && (
+        <div
+          onClick={() => setShowFps(false)}
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            background: "rgba(0,0,0,0.5)",
+            color: "#0f0",
+            padding: "4px",
+            fontFamily: "monospace",
+            zIndex: 1,
+            cursor: "pointer",
+          }}
+        >
+          FPS: {fps.toFixed(1)}
+        </div>
+      )}
     </div>
   );
 }
