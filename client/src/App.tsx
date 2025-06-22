@@ -174,8 +174,20 @@ export default function App() {
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (pinchData.current && e.touches.length < 2) pinchData.current = null;
-    if (e.touches.length === 0) dragging.current = false;
+    // Clear pinch data if fewer than 2 fingers
+    if (e.touches.length < 2) {
+      pinchData.current = null;
+    }
+
+    // Only enable dragging if it's a fresh 1-finger gesture
+    if (e.touches.length === 1) {
+      dragging.current = false; // reset it for now
+    }
+
+    // If no fingers left, definitely end dragging
+    if (e.touches.length === 0) {
+      dragging.current = false;
+    }
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
