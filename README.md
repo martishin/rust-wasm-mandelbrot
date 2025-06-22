@@ -1,6 +1,6 @@
 # Rust + WASM Mandelbrot Fractal
 
-This project showcases a **real-time, interactive Mandelbrot fractal** powered by **Rust + WebAssembly (WASM)** and rendered via **WebGL2** in the browser.
+This project showcases a **real-time, interactive Mandelbrot fractal** powered by **Rust + WebAssembly (WASM)** and rendered via **WebGL** in the browser.
 
 You can **pan, pinch, scroll, and zoom infinitely** — all computations are handled on the GPU for smooth performance, even on mobile devices.
 
